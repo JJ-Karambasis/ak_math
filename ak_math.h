@@ -11,39 +11,39 @@
 #endif // __cplusplus
 #endif //AK_OS_STATIC
 
-union ak_v2
+union ak_v2f
 {
     float Data[2];
     struct { float x; float y; };
 };
 
-union ak_v3
+union ak_v3f
 {
     float Data[3];
     struct { float x; float y; float z; };
-    struct { ak_v2 xy; float __unused0__; };
+    struct { ak_v2f xy; float __unused0__; };
 };
 
-union ak_v4
+union ak_v4f
 {
     float Data[4];
     struct { float x; float y; float z; float w; };
-    struct { ak_v3 xyz; float __unused0__; };
+    struct { ak_v3f xyz; float __unused0__; };
 };
 
-union ak_quat
+union ak_quatf
 {
     float Data[4];
     struct { float x; float y; float z; float w; };
-    struct { ak_v4 q; };
-    struct { ak_v3 v; float s; };
+    struct { ak_v4f q; };
+    struct { ak_v3f v; float s; };
 };
 
-union ak_m3
+union ak_m3f
 {
-    float Data[9];
-    ak_v3 Rows[3];
-    struct { ak_v3 x; ak_v3 y; ak_v3 z; };
+    float  Data[9];
+    ak_v3f Rows[3];
+    struct { ak_v3f x; ak_v3f y; ak_v3f z; };
     struct
     {
         float m00; float m01; float m02;
@@ -52,16 +52,16 @@ union ak_m3
     };
 };
 
-union ak_m4
+union ak_m4f
 {
     float Data[16];
-    ak_v4 Rows[4];
+    ak_v4f Rows[4];
     struct 
     { 
-        ak_v3 x; float __unused0__; 
-        ak_v3 y; float __unused1__;
-        ak_v3 z; float __unused2__;
-        ak_v3 t; float __unused3__;
+        ak_v3f x; float __unused0__; 
+        ak_v3f y; float __unused1__;
+        ak_v3f z; float __unused2__;
+        ak_v3f t; float __unused3__;
     };
     
     struct
@@ -73,9 +73,22 @@ union ak_m4
     };
 };
 
+bool operator==(const ak_v2f& A, const ak_v2f& B);
+bool operator!=(const ak_v2f& A, const ak_v2f& B);
+
 #endif //AK_MATH_H
 
 #ifdef AK_MATH_IMPLEMENTATION
+
+bool operator==(const ak_v2f& A, const ak_v2f& B)
+{
+    return A.x == B.x && A.y == B.y;
+}
+
+bool operator!=(const ak_v2f& A, const ak_v2f& B)
+{
+    return A.x != B.x || A.y != B.y;
+}
 
 #endif //AK_MATH_IMPLEMENTATION
 
