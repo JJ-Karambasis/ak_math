@@ -11,6 +11,10 @@
 #endif // __cplusplus
 #endif //AK_OS_STATIC
 
+#define AKM_PI 3.14159265359f
+#define AKM_To_Radians(v) ((v)*AKM_PI/180.0f)
+#define AKM_To_Degrees(v) ((v)*180.0f/AKM_PI)
+
 union ak_v2f
 {
     float Data[2];
@@ -76,9 +80,89 @@ union ak_m4f
 bool operator==(const ak_v2f& A, const ak_v2f& B);
 bool operator!=(const ak_v2f& A, const ak_v2f& B);
 
+ak_v3f AKM_V3(float x, float y, float z);
+
+ak_v3f operator+(const ak_v3f& A, const ak_v3f& B);
+ak_v3f& operator+=(ak_v3f& A, const ak_v3f& B);
+
+
+ak_v3f operator*(const ak_v3f& A, float B);
+ak_v3f operator*(float A, const ak_v3f& B);
+
+float AKM_Dot(const ak_v3f& A, const ak_v3f& B);
+float AKM_Sq_Mag(const ak_v3f& V);
+float AKM_Mag(const ak_v3f& V);
+ak_v3f AKM_Norm(const ak_v3f& V);
+ak_v3f AKM_Cross(const ak_v3f& A, const ak_v3f& B);
+ak_v3f AKM_Rotate(const ak_v3f& Direction, const ak_quatf& Orientation);
+
+ak_v4f AKM_V4(float x, float y, float z, float w);
+ak_v4f AKM_V4(const ak_v3f& V, float w);
+float AKM_Dot(const ak_v4f& A, const ak_v4f& B);
+ak_v4f operator*(const ak_v4f& A, const ak_m4f& B);
+
+ak_m3f AKM_ToMatrix(const ak_quatf& Orientation);
+
+ak_m4f AKM_M4(float V);
+ak_m4f AKM_IdentityM4();
+ak_m4f AKM_TransposeM4(const ak_m4f& M);
+ak_m4f AKM_TranslateM4(const ak_v3f& V);
+ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f& S);
+ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_quatf& Orientation);
+ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f& S);
+ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_quatf& Orientation);
+
+ak_quatf AKM_Quat(const ak_v3f& V, float S);
+ak_quatf AKM_Quat_RotX(float Pitch);
+ak_quatf AKM_Quat_RotZ(float Roll);
+ak_quatf AKM_Quat_RotY(float Yaw);
+float AKM_Dot(const ak_quatf& A, const ak_quatf& B);
+float AKM_Sq_Mag(const ak_quatf& Q);
+float AKM_Mag(const ak_quatf& Q);
+ak_quatf AKM_Norm(const ak_quatf& Q);
+ak_quatf operator*(const ak_quatf& A, float B);
+ak_quatf operator*(const ak_quatf& A, const ak_quatf& B);
+
 #endif //AK_MATH_H
 
 #ifdef AK_MATH_IMPLEMENTATION
+
+#if !defined(AKM_SQRT) || !defined(AKM_SIN) || !defined(AKM_COS) || !defined(AKM_TAN)
+#include <math.h>
+#endif
+
+#ifndef AKM_SQRT
+#define AKM_SQRT(v) sqrtf(v)
+#endif //AKM_SQRT
+
+#ifndef AKM_SIN
+#define AKM_SIN(v) sinf(v)
+#endif //AKM_SIN
+
+#ifndef AKM_COS
+#define AKM_COS(v) cosf(v)
+#endif //AKM_SIN
+
+#ifndef AKM_TAN
+#define AKM_TAN(v) tanf(v)
+#endif //AKM_SIN
+
+#define AKM__EPSILON32 1.1920929e-7f
+
+inline float AKM__Abs(float A)
+{
+    return A < 0 ? -A : A;
+}
+
+inline bool AKM__Equal_Approx(float A, float Eps)
+{
+    return AKM__Abs(A) < Eps;
+}
+
+inline bool AKM__Equal_Zero_Eps(float A)
+{
+    return AKM__Equal_Approx(A, AKM__EPSILON32);
+}
 
 bool operator==(const ak_v2f& A, const ak_v2f& B)
 {
@@ -88,6 +172,282 @@ bool operator==(const ak_v2f& A, const ak_v2f& B)
 bool operator!=(const ak_v2f& A, const ak_v2f& B)
 {
     return A.x != B.x || A.y != B.y;
+}
+
+ak_v3f AKM_V3(float x, float y, float z)
+{
+    ak_v3f Result = {x, y, z};
+    return Result;
+}
+
+ak_v3f operator+(const ak_v3f& A, const ak_v3f& B)
+{
+    ak_v3f Result = {A.x+B.x, A.y+B.y, A.z+B.z};
+    return Result;
+}
+
+ak_v3f& operator+=(ak_v3f& A, const ak_v3f& B)
+{
+    A = A+B;
+    return A;
+}
+
+ak_v3f operator*(const ak_v3f& A, float B)
+{
+    ak_v3f Result = {A.x*B, A.y*B, A.z*B};
+    return Result;
+}
+
+ak_v3f operator*(float A, const ak_v3f& B)
+{
+    ak_v3f Result = {A*B.x, A*B.y, A*B.z};
+    return Result;
+}
+
+float AKM_Dot(const ak_v3f& A, const ak_v3f& B)
+{
+    float Result = A.x*B.x + A.y*B.y + A.z*B.z;
+    return Result;
+}
+
+float AKM_Sq_Mag(const ak_v3f& V)
+{
+    return AKM_Dot(V, V);
+}
+
+float AKM_Mag(const ak_v3f& V)
+{
+    return AKM_SQRT(AKM_Sq_Mag(V));
+}
+
+ak_v3f AKM_Norm(const ak_v3f& V)
+{
+    float Length = AKM_Mag(V);
+    if(AKM__Equal_Zero_Eps(Length)) return {};
+    Length = 1.0f/Length;
+    return V*Length;
+}
+
+ak_v3f AKM_Cross(const ak_v3f& A, const ak_v3f& B)
+{
+    ak_v3f Result = {A.y*B.z - A.z*B.y, A.z*B.x-A.x*B.z, A.x*B.y-A.y*B.x};
+    return Result;
+}
+
+ak_v3f AKM_Rotate(const ak_v3f& Direction, const ak_quatf& Orientation)
+{
+    ak_v3f Result = ((2 * AKM_Dot(Orientation.v, Direction) * Orientation.v) + 
+                     ((Orientation.s*Orientation.s - AKM_Sq_Mag(Orientation.v))*Direction) +
+                     (2*Orientation.s*AKM_Cross(Orientation.v, Direction)));
+    return Result;
+}
+
+ak_v4f AKM_V4(float x, float y, float z, float w)
+{
+    ak_v4f Result = {x, y, z, w};
+    return Result;
+}
+
+ak_v4f AKM_V4(const ak_v3f& V, float w)
+{
+    return AKM_V4(V.x, V.y, V.z, w);
+}
+
+float AKM_Dot(const ak_v4f& A, const ak_v4f& B)
+{
+    float Result = A.x*B.x+A.y*B.y+A.z*B.z+A.w*B.w;
+    return Result;
+}
+
+ak_v4f operator*(const ak_v4f& V, const ak_m4f& B)
+{
+    ak_m4f BTransposed = AKM_TransposeM4(B);
+    
+    ak_v4f Result;
+    Result.x = AKM_Dot(V, BTransposed.Rows[0]);
+    Result.y = AKM_Dot(V, BTransposed.Rows[1]);
+    Result.z = AKM_Dot(V, BTransposed.Rows[2]);
+    Result.w = AKM_Dot(V, BTransposed.Rows[3]);
+    return Result;
+}
+
+ak_m3f AKM_ToMatrix(const ak_quatf& Q)
+{
+    float qxqy = Q.x*Q.y;
+    float qwqz = Q.w*Q.z;
+    float qxqz = Q.x*Q.z;
+    float qwqy = Q.w*Q.y;
+    float qyqz = Q.y*Q.z;
+    float qwqx = Q.w*Q.x;
+    
+    float qxqx = Q.x*Q.x;
+    float qyqy = Q.y*Q.y;
+    float qzqz = Q.z*Q.z;
+    
+    ak_m3f Result = 
+    {
+        1 - 2*(qyqy+qzqz), 2*(qxqy+qwqz),     2*(qxqz-qwqy),   
+        2*(qxqy-qwqz),     1 - 2*(qxqx+qzqz), 2*(qyqz+qwqx),   
+        2*(qxqz+qwqy),     2*(qyqz-qwqx),     1 - 2*(qxqx+qyqy)
+    };
+    
+    return Result;
+}
+
+ak_m4f AKM_M4(float V)
+{
+    ak_m4f Result = 
+    {
+        V, 0, 0, 0, 
+        0, V, 0, 0, 
+        0, 0, V, 0, 
+        0, 0, 0, V
+    };
+    
+    return Result;
+}
+
+ak_m4f AKM_IdentityM4()
+{
+    return AKM_M4(1.0f);
+}
+
+ak_m4f AKM_TransposeM4(const ak_m4f& M)
+{
+    ak_m4f Result;
+    Result.m00 = M.m00;
+    Result.m10 = M.m01;
+    Result.m20 = M.m02;
+    Result.m30 = M.m03; 
+    
+    Result.m01 = M.m10;
+    Result.m11 = M.m11;
+    Result.m21 = M.m12;
+    Result.m31 = M.m13; 
+    
+    Result.m02 = M.m20;
+    Result.m12 = M.m21;
+    Result.m22 = M.m22;
+    Result.m32 = M.m23;
+    
+    Result.m03 = M.m30;
+    Result.m13 = M.m31;
+    Result.m23 = M.m32;
+    Result.m33 = M.m33; 
+    
+    return Result;
+}
+
+ak_m4f AKM_TranslateM4(const ak_v3f& V)
+{
+    ak_m4f Result = AKM_IdentityM4();
+    Result.t = V;
+    return Result;
+}
+
+ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f& S)
+{
+    ak_m4f Result = {};
+    Result.x = Orientation.x*S.x;
+    Result.y = Orientation.y*S.y;
+    Result.z = Orientation.z*S.z;
+    Result.t = P;
+    Result.Data[15] = 1.0f;
+    return Result;
+}
+
+ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_quatf& Orientation)
+{
+    return AKM_TransformM4(P, AKM_ToMatrix(Orientation), AKM_V3(1.0f, 1.0f, 1.0f));
+}
+
+ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f& S)
+{
+    ak_v3f X = Orientation.x*S.x;
+    ak_v3f Y = Orientation.y*S.y;
+    ak_v3f Z = Orientation.z*S.z;
+    ak_v3f T = {-AKM_Dot(P, X), -AKM_Dot(P, Y), -AKM_Dot(P, Z)};
+    
+    ak_m4f Result = 
+    {
+        X.x, Y.x, Z.x, 0, 
+        X.y, Y.y, Z.y, 0,
+        X.z, Y.z, Z.z, 0, 
+        T.x, T.y, T.z, 1
+    };
+    
+    return Result;
+}
+
+ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_quatf& Orientation)
+{
+    return AKM_Inverse_TransformM4(P, AKM_ToMatrix(Orientation), AKM_V3(1.0f, 1.0f, 1.0f));
+}
+
+ak_quatf AKM_Quat(const ak_v3f& V, float S)
+{
+    ak_quatf Result = {V.x, V.y, V.z, S};
+    return Result;
+}
+
+ak_quatf AKM_Quat_RotX(float Pitch)
+{
+    ak_quatf Result = {};
+    Result.x = AKM_SIN(Pitch/2);
+    Result.w = AKM_COS(Pitch/2);
+    return Result;
+}
+
+ak_quatf AKM_Quat_RotY(float Yaw)
+{
+    ak_quatf Result = {};
+    Result.y = AKM_SIN(Yaw/2);
+    Result.w = AKM_COS(Yaw/2);
+    return Result;
+}
+
+ak_quatf AKM_Quat_RotZ(float Roll)
+{
+    ak_quatf Result = {};
+    Result.z = AKM_SIN(Roll/2);
+    Result.w = AKM_COS(Roll/2);
+    return Result;
+}
+
+float AKM_Dot(const ak_quatf& A, const ak_quatf& B)
+{
+    return {A.x*B.x+A.y*B.y+A.z*B.z+A.w*B.w};
+}
+
+float AKM_Sq_Mag(const ak_quatf& Q)
+{
+    return AKM_Dot(Q, Q);
+}
+
+float AKM_Mag(const ak_quatf& Q)
+{
+    return AKM_SQRT(AKM_Sq_Mag(Q));
+}
+
+ak_quatf AKM_Norm(const ak_quatf& Q)
+{
+    float Length = AKM_Mag(Q);
+    if(AKM__Equal_Zero_Eps(Length)) return {0, 0, 0, 1};
+    Length = 1.0f/Length;
+    return Q*Length;
+}
+
+ak_quatf operator*(const ak_quatf& A, float B)
+{
+    ak_quatf Result = {A.x*B, A.y*B, A.z*B, A.w*B};
+    return Result;
+}
+
+ak_quatf operator*(const ak_quatf& A, const ak_quatf& B)
+{
+    ak_quatf Result = AKM_Quat(AKM_Cross(A.v, B.v) + B.s*A.v + B.v*A.s, 
+                               A.s*B.s - AKM_Dot(A.v, B.v));
+    return Result;  
 }
 
 #endif //AK_MATH_IMPLEMENTATION
@@ -1229,7 +1589,7 @@ int utest_main(int argc, const char *const argv[]) {
             // For the random order we'll use PCG.
             const utest_uint32_t state = seed;
             const utest_uint32_t word =
-            ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+                ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
             const utest_uint32_t next = ((word >> 22u) ^ word) % index;
             
             // Swap the randomly chosen element into the last location.
