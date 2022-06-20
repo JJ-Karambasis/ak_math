@@ -77,6 +77,8 @@ union ak_m4f
     };
 };
 
+ak_v2f AKM_V2(float x, float y);
+
 bool operator==(const ak_v2f& A, const ak_v2f& B);
 bool operator!=(const ak_v2f& A, const ak_v2f& B);
 
@@ -111,6 +113,7 @@ ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f&
 ak_m4f AKM_TransformM4(const ak_v3f& P, const ak_quatf& Orientation);
 ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const ak_v3f& S);
 ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_quatf& Orientation);
+ak_m4f operator*(const ak_m4f& A, const ak_m4f& B);
 
 ak_quatf AKM_Quat(const ak_v3f& V, float S);
 ak_quatf AKM_Quat_RotX(float Pitch);
@@ -162,6 +165,12 @@ inline bool AKM__Equal_Approx(float A, float Eps)
 inline bool AKM__Equal_Zero_Eps(float A)
 {
     return AKM__Equal_Approx(A, AKM__EPSILON32);
+}
+
+ak_v2f AKM_V2(float x, float y)
+{
+    ak_v2f Result = {x, y};
+    return Result;
 }
 
 bool operator==(const ak_v2f& A, const ak_v2f& B)
@@ -255,7 +264,7 @@ ak_v4f AKM_V4(const ak_v3f& V, float w)
 
 float AKM_Dot(const ak_v4f& A, const ak_v4f& B)
 {
-    float Result = A.x*B.x+A.y*B.y+A.z*B.z+A.w*B.w;
+    float Result = A.x*B.x + A.y*B.y + A.z*B.z + A.w*B.w;
     return Result;
 }
 
@@ -382,6 +391,35 @@ ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_m3f& Orientation, const
 ak_m4f AKM_Inverse_TransformM4(const ak_v3f& P, const ak_quatf& Orientation)
 {
     return AKM_Inverse_TransformM4(P, AKM_ToMatrix(Orientation), AKM_V3(1.0f, 1.0f, 1.0f));
+}
+
+ak_m4f operator*(const ak_m4f& A, const ak_m4f& B)
+{
+    ak_m4f Result;
+    
+    ak_m4f BTransposed = AKM_TransposeM4(B);
+    
+    Result.Data[0]  = AKM_Dot(A.Rows[0], BTransposed.Rows[0]);
+    Result.Data[1]  = AKM_Dot(A.Rows[0], BTransposed.Rows[1]);
+    Result.Data[2]  = AKM_Dot(A.Rows[0], BTransposed.Rows[2]);
+    Result.Data[3]  = AKM_Dot(A.Rows[0], BTransposed.Rows[3]);
+    
+    Result.Data[4]  = AKM_Dot(A.Rows[1], BTransposed.Rows[0]);
+    Result.Data[5]  = AKM_Dot(A.Rows[1], BTransposed.Rows[1]);
+    Result.Data[6]  = AKM_Dot(A.Rows[1], BTransposed.Rows[2]);
+    Result.Data[7]  = AKM_Dot(A.Rows[1], BTransposed.Rows[3]);
+    
+    Result.Data[8]  = AKM_Dot(A.Rows[2], BTransposed.Rows[0]);
+    Result.Data[9]  = AKM_Dot(A.Rows[2], BTransposed.Rows[1]);
+    Result.Data[10] = AKM_Dot(A.Rows[2], BTransposed.Rows[2]);
+    Result.Data[11] = AKM_Dot(A.Rows[2], BTransposed.Rows[3]);
+    
+    Result.Data[12] = AKM_Dot(A.Rows[3], BTransposed.Rows[0]);
+    Result.Data[13] = AKM_Dot(A.Rows[3], BTransposed.Rows[1]);
+    Result.Data[14] = AKM_Dot(A.Rows[3], BTransposed.Rows[2]);
+    Result.Data[15] = AKM_Dot(A.Rows[3], BTransposed.Rows[3]);
+    
+    return Result;
 }
 
 ak_quatf AKM_Quat(const ak_v3f& V, float S)
@@ -1589,7 +1627,7 @@ int utest_main(int argc, const char *const argv[]) {
             // For the random order we'll use PCG.
             const utest_uint32_t state = seed;
             const utest_uint32_t word =
-                ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+            ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
             const utest_uint32_t next = ((word >> 22u) ^ word) % index;
             
             // Swap the randomly chosen element into the last location.
